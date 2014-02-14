@@ -131,10 +131,10 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
   //open file
-  ifstream infile(loadfile);
+  ifstream infile(loadfile.c_str());
   if (!infile) {
     cout << "unable to open file";
-    exit(1);
+    return 1;
   }
   //create record file
   RecordFile record(table+".tbl",'w');
@@ -143,9 +143,9 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   int currentKey;
   string currentValue;
   RecordId recordId;
-  while(getline(infile,currentLine){
-	parseLoadLine(&currentLine, &currentKey, &currentValue);//parse line
-	record.append(currentKey, &currentValue, &recordId);
+  while(getline(infile,currentLine)){
+	parseLoadLine(currentLine, currentKey, currentValue);//parse line
+	record.append(currentKey, currentValue, recordId);
   }
   return 0;
 }
