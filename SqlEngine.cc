@@ -130,6 +130,13 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
+  //Variable initialization
+  RecordFile record;	//Target table file
+  string currentLine;	//Current line of input file
+  int currentKey;		//Key of currentLine
+  string currentValue;	//Value of currentLine
+  RecordId recordId;	//RecordId
+  
   //Open input file
   ifstream infile(loadfile.c_str());
   if (!infile) {
@@ -138,16 +145,11 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   }
   
   //Create/Open record file
-  RecordFile record;
   record.open(table+".tbl",'w');
   
   //Insert lines
-  string currentLine;
-  int currentKey;
-  string currentValue;
-  RecordId recordId;
   while(getline(infile,currentLine)){
-	parseLoadLine(currentLine, currentKey, currentValue);//parse line
+	parseLoadLine(currentLine, currentKey, currentValue);	//Parse line
 	record.append(currentKey, currentValue, recordId);
   }
   
