@@ -131,7 +131,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
   //Variable initialization
-  RecordFile record;	//Target table file
+  RecordFile record(table+".tbl",'w');	//Target table file
   string currentLine;	//Current line of input file
   int currentKey;		//Key of currentLine
   string currentValue;	//Value of currentLine
@@ -143,9 +143,6 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     cout << "Unable to open file.\n";
     return 1;
   }
-  
-  //Create/Open record file
-  record.open(table+".tbl",'w');
   
   //Insert lines
   while(getline(infile,currentLine)){
