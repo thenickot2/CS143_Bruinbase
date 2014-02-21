@@ -10,8 +10,7 @@ using namespace std;
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
 {
-	int errorCheck=pf.read(pid,buffer);
-	return errorCheck;
+	return pf.read(pid,buffer);
 }
     
 /*
@@ -22,8 +21,7 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
 { 
-	int errorCheck=pf.write(pid,buffer);
-	return errorCheck;
+	return pf.write(pid,buffer);
 }
 
 /*
@@ -99,14 +97,16 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 	eid=0;
 	int keyCount=getKeyCount();
 	Entry* entry=(Entry*) buffer;
+	
 	while (eid<keyCount){
+		// Found the key
 		if(entry->key>=searchKey)
-			break;
+			return 0;
 		eid++;
 	}
-	if (eid==keyCount)
-		return 1;
-	return 0;
+	
+	// Reached the end of page without finding the key
+	return 1;
 }
 
 /*
@@ -117,22 +117,38 @@ RC BTLeafNode::locate(int searchKey, int& eid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
-{ return 0; }
+{
+	if (eid < 0 || eid >= getKeyCount())
+	return 1;
+
+	Entry* entry = (Entry*) buffer + eid;
+	rid = entry->rid;
+	key = entry->key;
+	return 0;
+}
 
 /*
- * Return the pid of the next slibling node.
+ * Return the pid of the next sibling node.
  * @return the PageId of the next sibling node 
  */
 PageId BTLeafNode::getNextNodePtr()
-{ return 0; }
+{
+	// Pointer at the end
+	PageId* pid = (PageId*) (buffer+PageFile::PAGE_SIZE) - 1;
+	return *pid;
+}
 
 /*
- * Set the pid of the next slibling node.
+ * Set the pid of the next sibling node.
  * @param pid[IN] the PageId of the next sibling node 
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::setNextNodePtr(PageId pid)
-{ return 0; }
+{
+	PageId* sib = (PageId*) (buffer+PageFile::PAGE_SIZE) - 1;
+	*sib = pid;
+	return 0;
+}
 
 /*
  * Read the content of the node from the page pid in the PageFile pf.
@@ -141,7 +157,9 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{
+	return pf.read(pid,buffer);
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
@@ -150,14 +168,25 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::write(PageId pid, PageFile& pf)
-{ return 0; }
+{
+	return pf.write(pid,buffer);
+}
 
 /*
  * Return the number of keys stored in the node.
  * @return the number of keys in the node
  */
 int BTNonLeafNode::getKeyCount()
-{ return 0; }
+{
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	int keyCount=0;
+	Entry* entry=(Entry*) buffer;
+	for(int count=0;count<maxKeyCount;count++){
+		if((entry+count)->key!=0)
+			keyCount++;
+	}
+	return keyCount;
+}
 
 
 /*
