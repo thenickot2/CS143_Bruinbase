@@ -13,6 +13,11 @@
 #include "RecordFile.h"
 #include "PageFile.h"
 
+typedef struct {
+	RecordId rid;
+	int key;
+} Entry;
+
 /**
  * BTLeafNode: The class representing a B+tree leaf node.
  */
