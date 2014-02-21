@@ -32,11 +32,11 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
  */
 int BTLeafNode::getKeyCount()
 {
-	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry);
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
 	int keyCount=0;
 	Entry* entry=(Entry*) buffer;
 	for(int count=0;count<maxKeyCount;count++){
-		if(entry[count]->key!=0)
+		if((entry+count)->key!=0)
 			keyCount++;
 	}
 	return keyCount;
@@ -50,9 +50,25 @@ int BTLeafNode::getKeyCount()
  */
 RC BTLeafNode::insert(int key, const RecordId& rid)
 {
-	if (getKeyCount() == ((PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry)))
-		return 1;
-	
+	int keyCount=getKeyCount();
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	if (keyCount == maxKeyCount)
+		return 1;	//buffer full
+	//get position to insert
+	int insertPosition;
+	int errorCheck=locate(key,insertPosition);
+	if (errorCheck!=0)
+		insertPosition=keyCount;
+	//Shift any larger entries to the right of the array
+	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	int amountToShift=keyCount-insertPosition;
+	for (int i=amountToShift;i>=0;i--){
+		(entryBuffer+insertPosition+i+1)->key=(entryBuffer+insertPosition+i)->key;
+		(entryBuffer+insertPosition+i+1)->rid=(entryBuffer+insertPosition+i)->rid;
+	}
+	//modify entry/insert
+	(entryBuffer+insertPosition)->key=key;
+	(entryBuffer+insertPosition)->rid=rid;
 	return 0;
 }
 
