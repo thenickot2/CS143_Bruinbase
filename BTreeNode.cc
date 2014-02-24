@@ -105,6 +105,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	
 	//split
 	sibling.insert(temp.key,temp.rid);
+	siblingKey=(entryBuffer+sid)->key;
 	for(int i=sid;i<keyCount;i++){
 		sibling.insert((entryBuffer+i)->key,(entryBuffer+i)->rid);
 		(entryBuffer+i)->key=0;
@@ -224,7 +225,29 @@ int BTNonLeafNode::getKeyCount()
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
-{ return 0; }
+{ 
+	int keyCount=getKeyCount();
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	if (keyCount == maxKeyCount)
+		return 1;	//buffer full
+	//get position to insert
+	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	int eid;
+	for(eid=0;eid<keyCount;eid++)
+		if(((entryBuffer+eid))->key>key)
+			break;
+	//Shift any larger entries to the right of the array
+	
+	int amountToShift=keyCount-eid;
+	for (int i=amountToShift;i>=0;i--){
+		(entryBuffer+eid+i+1)->key=(entryBuffer+eid+i)->key;
+		(entryBuffer+eid+i+1)->pid=(entryBuffer+eid+i)->pid;
+	}
+	//modify entry/insert
+	(entryBuffer+eid)->key=key;
+	(entryBuffer+eid)->pid=pid;
+	return 0;
+}
 
 /*
  * Insert the (key, pid) pair to the node
@@ -237,7 +260,38 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
-{ return 0; }
+{ 
+	//get position to insert
+	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	int keyCount=getKeyCount();
+	int eid;
+	for(eid=0;eid<keyCount;eid++)
+		if(((entryBuffer+eid))->key>key)
+			break;
+	int sid=(keyCount+1)/2; //starting position of entries for siblings(even split)
+	//do normal insert
+	//Shift any larger entries to the right of the array
+	Entry temp; //hold last entry since it might be overwritten
+	temp.key=(entryBuffer+keyCount-1)->key;
+	temp.pid=(entryBuffer+keyCount-1)->pid;
+	int amountToShift=keyCount-eid;
+	for (int i=keyCount-1;i>eid;i--){
+		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
+		(entryBuffer+i)->pid=(entryBuffer+i-1)->pid;
+	}
+	//modify entry/insert
+	(entryBuffer+eid)->key=key;
+	(entryBuffer+eid)->pid=pid;
+	
+	//split
+	midKey=(entryBuffer+sid)->key;
+	sibling.insert(temp.key,temp.pid);
+	for(int i=sid;i<keyCount;i++){
+		sibling.insert((entryBuffer+i)->key,(entryBuffer+i)->pid);
+		(entryBuffer+i)->key=0;
+	}
+	return 0;
+}
 
 /*
  * Given the searchKey, find the child-node pointer to follow and
@@ -247,7 +301,18 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
-{ return 0; }
+{
+	Entry* entryBuffer=(Entry*) buffer;
+	int eid;
+	int keyCount=getKeyCount();
+	for(eid=0;eid<keyCount;eid++)
+		if(((entryBuffer+eid))->key>searchKey)
+			break;
+	if (eid>keyCount)
+		return 1;
+	pid=(entryBuffer+eid)->pid;
+	return 0;
+}
 
 /*
  * Initialize the root node with (pid1, key, pid2).
@@ -257,4 +322,19 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
-{ return 0; }
+{
+	Entry* entryBuffer=(Entry*) buffer;
+	int keyCount=getKeyCount();
+	for(int i=0;i<keyCount;i++)
+		(entryBuffer+i)->key=0;
+	struct format{
+		PageId pid1;
+		int key;
+		PageId pid2;
+	};
+	format* formatBuffer=(format*) buffer;
+	formatBuffer->pid1=pid1;
+	formatBuffer->pid2=pid2;
+	formatBuffer->key=key;
+	return 0;
+}
