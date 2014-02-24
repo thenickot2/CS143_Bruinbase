@@ -92,8 +92,8 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	//Shift any larger entries to the right of the array
 	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
 	Entry temp; //hold last entry since it might be overwritten
-	temp->key=(entryBuffer+keyCount-1)->key;
-	temp->rid=(entryBuffer+keyCount-1)->rid;
+	temp.key=(entryBuffer+keyCount-1)->key;
+	temp.rid=(entryBuffer+keyCount-1)->rid;
 	int amountToShift=keyCount-eid;
 	for (int i=keyCount-1;i>eid;i--){
 		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
@@ -104,8 +104,10 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	(entryBuffer+eid)->rid=rid;
 	
 	//split
+	sibling.insert(temp.key,temp.rid);
 	for(int i=sid;i<keyCount;i++){
-	
+		sibling.insert((entryBuffer+i)->key,(entryBuffer+i)->rid);
+		(entryBuffer+i)->key=0;
 	}
 	return 0;
 }
