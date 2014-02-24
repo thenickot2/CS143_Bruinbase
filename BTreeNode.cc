@@ -209,7 +209,7 @@ int BTNonLeafNode::getKeyCount()
 {
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
 	int keyCount=0;
-	Entry* entry=(Entry*) buffer;
+	Entry* entry=(Entry*) (buffer+sizeof(PageId*));
 	for(int count=0;count<maxKeyCount;count++){
 		if((entry+count)->key!=0)
 			keyCount++;
@@ -231,7 +231,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 	if (keyCount == maxKeyCount)
 		return 1;	//buffer full
 	//get position to insert
-	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	Entry* entryBuffer=(Entry*)(buffer+sizeof(PageId*)); //buffer typecasted
 	int eid;
 	for(eid=0;eid<keyCount;eid++)
 		if(((entryBuffer+eid))->key>key)
@@ -262,7 +262,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
 { 
 	//get position to insert
-	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*)); //buffer typecasted
 	int keyCount=getKeyCount();
 	int eid;
 	for(eid=0;eid<keyCount;eid++)
@@ -302,7 +302,16 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 {
-	Entry* entryBuffer=(Entry*) buffer;
+	struct checkInitial{
+		PageId pid;
+		int key;
+	};
+	checkInitial* tempBuffer=(checkInitial*) buffer;
+	if (searchKey<tempBuffer->key){
+		pid=tempBuffer->pid;
+		return 0;
+	}
+	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*));
 	int eid;
 	int keyCount=getKeyCount();
 	for(eid=0;eid<keyCount;eid++)
