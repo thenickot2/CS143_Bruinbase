@@ -82,7 +82,33 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
  */
 RC BTLeafNode::insertAndSplit(int key, const RecordId& rid, 
                               BTLeafNode& sibling, int& siblingKey)
-{ return 0; }
+{ 
+	int eid; //insert position
+	if (locate(key,eid))
+		return 1;
+	int keyCount=getKeyCount();
+	int sid=(keyCount+1)/2; //starting position of entries for siblings(even split)
+	//do normal insert
+	//Shift any larger entries to the right of the array
+	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	Entry temp; //hold last entry since it might be overwritten
+	temp->key=(entryBuffer+keyCount-1)->key;
+	temp->rid=(entryBuffer+keyCount-1)->rid;
+	int amountToShift=keyCount-eid;
+	for (int i=keyCount-1;i>eid;i--){
+		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
+		(entryBuffer+i)->rid=(entryBuffer+i-1)->rid;
+	}
+	//modify entry/insert
+	(entryBuffer+eid)->key=key;
+	(entryBuffer+eid)->rid=rid;
+	
+	//split
+	for(int i=sid;i<keyCount;i++){
+	
+	}
+	return 0;
+}
 
 /*
  * Find the entry whose key value is larger than or equal to searchKey
