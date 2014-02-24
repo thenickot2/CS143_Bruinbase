@@ -56,7 +56,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 	int insertPosition;
 	int errorCheck=locate(key,insertPosition);
 	if (errorCheck!=0)
-		insertPosition=keyCount;
+		return 1;
 	//Shift any larger entries to the right of the array
 	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
 	int amountToShift=keyCount-insertPosition;
@@ -129,7 +129,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 	
 	while (eid<keyCount){
 		// Found the key
-		if(entry->key>=searchKey)
+		if(entry->key>searchKey)
 			return 0;
 		eid++;
 	}
@@ -318,8 +318,9 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 		if(((entryBuffer+eid))->key>searchKey)
 			break;
 	if (eid>keyCount)
-		return 1;
-	pid=(entryBuffer+eid)->pid;
+		pid=(entryBuffer+keyCount-1)->pid;
+	else
+		pid=(entryBuffer+eid-1)->pid;
 	return 0;
 }
 
