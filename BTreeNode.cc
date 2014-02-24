@@ -307,7 +307,7 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 		int key;
 	};
 	checkInitial* tempBuffer=(checkInitial*) buffer;
-	if (searchKey<tempBuffer->key){
+	if (searchKey<(tempBuffer->key)){
 		pid=tempBuffer->pid;
 		return 0;
 	}
@@ -332,7 +332,7 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 {
-	Entry* entryBuffer=(Entry*) buffer;
+	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*));
 	int keyCount=getKeyCount();
 	for(int i=0;i<keyCount;i++)
 		(entryBuffer+i)->key=0;
