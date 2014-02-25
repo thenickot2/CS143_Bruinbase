@@ -2,6 +2,8 @@
 
 using namespace std;
 
+
+#include <iostream>
 RC BTLeafNode::initBuffer()
 {
 	for(int i=0;i<1024;i++)
@@ -10,7 +12,10 @@ RC BTLeafNode::initBuffer()
 }
 char* BTLeafNode::printBuffer()
 {
-	return buffer;
+	Entry* buf = (Entry*) buffer;
+	for(int i=0; i<getKeyCount();i++)
+		cout << (buf[i].key) << endl;
+	cout << getKeyCount() << endl;
 }
 
 

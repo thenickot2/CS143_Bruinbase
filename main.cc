@@ -10,6 +10,9 @@
 #include "Bruinbase.h"
 #include "SqlEngine.h"
 #include <iostream>
+#include "BTreeNode.h"
+#include "RecordFile.h"
+using namespace std;
 /*
 int main()
 {
@@ -23,12 +26,17 @@ int main()
 {
 	BTLeafNode testnode;
 	testnode.initBuffer();
+	cout << testnode.getKeyCount();
 	RecordId id;
 	id.pid=11; id.sid=12;
-	testnode.insert(10,id);
+	for(int i = 1; i < 86; i++)
+		testnode.insert(i,id);
+	BTLeafNode sibling;
+	sibling.initBuffer();
+	int sibkey;
+	testnode.insertAndSplit(100,id,sibling,sibkey);
 	
-	char* buffer = testnode.printBuffer();
-	for(int i=0; i<1024;i++)
-		cout << buffer[i];
+	sibling.printBuffer();
+	//cout << sibkey;
 	return 0;
 }

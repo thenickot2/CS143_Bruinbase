@@ -19,7 +19,7 @@
 class BTLeafNode {
   public:
 	RC initBuffer();
-	char* BTLeafNode::printBuffer();
+	char* printBuffer();
   
   
    /**
@@ -100,7 +100,7 @@ class BTLeafNode {
     */
     RC write(PageId pid, PageFile& pf);
 
-  private:
+ // private:
    /**
     * The main memory buffer for loading the content of the disk page 
     * that contains the node.
