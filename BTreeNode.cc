@@ -1,9 +1,7 @@
 #include "BTreeNode.h"
-
+#include <iostream>
 using namespace std;
 
-
-#include <iostream>
 RC BTLeafNode::initBuffer()
 {
 	for(int i=0;i<1024;i++)

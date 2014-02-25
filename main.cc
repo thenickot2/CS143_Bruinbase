@@ -9,11 +9,11 @@
  
 #include "Bruinbase.h"
 #include "SqlEngine.h"
-#include <iostream>
-#include "BTreeNode.h"
-#include "RecordFile.h"
+//#include <iostream>
+//#include "BTreeNode.h"
+//#include "RecordFile.h"
 using namespace std;
-/*
+
 int main()
 {
   // run the SQL engine taking user commands from standard input (console).
@@ -21,7 +21,7 @@ int main()
 
   return 0;
 }
-*/
+/*
 int main()
 {
 	BTLeafNode testnode;
@@ -40,3 +40,4 @@ int main()
 	//cout << sibkey;
 	return 0;
 }
+*/
