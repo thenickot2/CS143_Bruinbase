@@ -30,6 +30,7 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
  */
 int BTLeafNode::getKeyCount()
 {
+	// Maximum size of buffer / size of Entry without the pointer at the end
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
 	int keyCount=0;
 	Entry* entry=(Entry*) buffer;
@@ -52,19 +53,26 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
 	if (keyCount == maxKeyCount)
 		return 1;	//buffer full
-	//get position to insert
+		
+	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	
+	// Everything is smaller than key, put at end of the node
 	int insertPosition;
 	int errorCheck=locate(key,insertPosition);
-	if (errorCheck!=0)
-		return 1;
-	//Shift any larger entries to the right of the array
-	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
+	if (errorCheck)
+	{
+		(entryBuffer+insertPosition)->key=key;
+		(entryBuffer+insertPosition)->rid=rid;
+		return 0;
+	}
+	
+	// Shift any larger entries to the right of the array
 	int amountToShift=keyCount-insertPosition;
 	for (int i=amountToShift;i>=0;i--){
 		(entryBuffer+insertPosition+i+1)->key=(entryBuffer+insertPosition+i)->key;
 		(entryBuffer+insertPosition+i+1)->rid=(entryBuffer+insertPosition+i)->rid;
 	}
-	//modify entry/insert
+	// Modify entry/insert
 	(entryBuffer+insertPosition)->key=key;
 	(entryBuffer+insertPosition)->rid=rid;
 	return 0;
@@ -84,30 +92,42 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
                               BTLeafNode& sibling, int& siblingKey)
 { 
 	int eid; //insert position
+	
+	/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	if (locate(key,eid))
 		return 1;
+	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+	
 	int keyCount=getKeyCount();
-	int sid=(keyCount+1)/2; //starting position of entries for siblings(even split)
-	//do normal insert
-	//Shift any larger entries to the right of the array
+	int sid=(keyCount+1)/2; // Starting position of entries for siblings(even split)
+	
+	// Do normal insert
+	// Shift any larger entries to the right of the array
 	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
 	Entry temp; //hold last entry since it might be overwritten
 	temp.key=(entryBuffer+keyCount-1)->key;
 	temp.rid=(entryBuffer+keyCount-1)->rid;
+	
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	// You mean SID?
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	int amountToShift=keyCount-eid;
 	for (int i=keyCount-1;i>eid;i--){
 		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
 		(entryBuffer+i)->rid=(entryBuffer+i-1)->rid;
 	}
-	//modify entry/insert
+	// Modify entry/insert
 	(entryBuffer+eid)->key=key;
 	(entryBuffer+eid)->rid=rid;
 	
-	//split
+	// Split
 	sibling.insert(temp.key,temp.rid);
 	siblingKey=(entryBuffer+sid)->key;
+	// Start at the split position
 	for(int i=sid;i<keyCount;i++){
 		sibling.insert((entryBuffer+i)->key,(entryBuffer+i)->rid);
+		// Null out the remainder of the original buffer
+		// so keyCount returns the correct value
 		(entryBuffer+i)->key=0;
 	}
 	return 0;
@@ -134,7 +154,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 		eid++;
 	}
 	
-	// Reached the end of page without finding the key
+	// Reached the end of page
 	return 1;
 }
 
@@ -148,7 +168,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 {
 	if (eid < 0 || eid >= getKeyCount())
-	return 1;
+		return 1;
 
 	Entry* entry = (Entry*) buffer + eid;
 	rid = entry->rid;
@@ -207,6 +227,7 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
  */
 int BTNonLeafNode::getKeyCount()
 {
+	// Same as BTLeafNode
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
 	int keyCount=0;
 	Entry* entry=(Entry*) (buffer+sizeof(PageId*));
@@ -230,20 +251,23 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
 	if (keyCount == maxKeyCount)
 		return 1;	//buffer full
-	//get position to insert
+		
+	// Get position to insert
+	// Offset for the initial pointer
 	Entry* entryBuffer=(Entry*)(buffer+sizeof(PageId*)); //buffer typecasted
 	int eid;
 	for(eid=0;eid<keyCount;eid++)
 		if(((entryBuffer+eid))->key>key)
 			break;
-	//Shift any larger entries to the right of the array
-	
+			
+	// Shift any larger entries to the right of the array
 	int amountToShift=keyCount-eid;
 	for (int i=amountToShift;i>=0;i--){
 		(entryBuffer+eid+i+1)->key=(entryBuffer+eid+i)->key;
 		(entryBuffer+eid+i+1)->pid=(entryBuffer+eid+i)->pid;
 	}
-	//modify entry/insert
+	
+	// Modify entry/insert
 	(entryBuffer+eid)->key=key;
 	(entryBuffer+eid)->pid=pid;
 	return 0;
@@ -261,17 +285,18 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
 { 
-	//get position to insert
+	// Get position to insert
 	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*)); //buffer typecasted
 	int keyCount=getKeyCount();
 	int eid;
 	for(eid=0;eid<keyCount;eid++)
 		if(((entryBuffer+eid))->key>key)
 			break;
-	int sid=(keyCount+1)/2; //starting position of entries for siblings(even split)
-	//do normal insert
-	//Shift any larger entries to the right of the array
-	Entry temp; //hold last entry since it might be overwritten
+
+	int sid=(keyCount+1)/2; // Starting position of entries for siblings(even split)
+	// Do normal insert
+	// Shift any larger entries to the right of the array
+	Entry temp; // Hold last entry since it might be overwritten
 	temp.key=(entryBuffer+keyCount-1)->key;
 	temp.pid=(entryBuffer+keyCount-1)->pid;
 	int amountToShift=keyCount-eid;
@@ -279,11 +304,11 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
 		(entryBuffer+i)->pid=(entryBuffer+i-1)->pid;
 	}
-	//modify entry/insert
+	// Modify entry/insert
 	(entryBuffer+eid)->key=key;
 	(entryBuffer+eid)->pid=pid;
 	
-	//split
+	// Split
 	midKey=(entryBuffer+sid)->key;
 	sibling.insert(temp.key,temp.pid);
 	for(int i=sid;i<keyCount;i++){
@@ -302,6 +327,9 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 {
+	// To check the first key and possibly use the leading pointer
+	// we typecasted the buffer temporarily so that we can access
+	// it easily
 	struct checkInitial{
 		PageId pid;
 		int key;
@@ -311,16 +339,19 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 		pid=tempBuffer->pid;
 		return 0;
 	}
+	
+	// Resume normal typecasting
 	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*));
 	int eid;
 	int keyCount=getKeyCount();
 	for(eid=0;eid<keyCount;eid++)
-		if(((entryBuffer+eid))->key>searchKey)
-			break;
-	if (eid>keyCount)
-		pid=(entryBuffer+keyCount-1)->pid;
-	else
-		pid=(entryBuffer+eid-1)->pid;
+		if(((entryBuffer+eid))->key>=searchKey)
+		{
+			pid=(entryBuffer+eid)->pid;
+			return 0;
+		}
+	// Reached the end of the array
+	pid=(entryBuffer+keyCount-1)->pid;
 	return 0;
 }
 
@@ -333,10 +364,13 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 {
+	// Clear the buffer
 	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*));
 	int keyCount=getKeyCount();
 	for(int i=0;i<keyCount;i++)
 		(entryBuffer+i)->key=0;
+		
+	// Typecast the buffer in this special format to make initializing easier
 	struct format{
 		PageId pid1;
 		int key;

@@ -187,8 +187,8 @@ class BTNonLeafNode {
     char buffer[PageFile::PAGE_SIZE];
     
     typedef struct {
-		PageId pid;
 		int key;
+		PageId pid;
 	} Entry;
 }; 
 
