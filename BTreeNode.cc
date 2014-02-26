@@ -320,7 +320,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 	// Split
 	midKey=(entryBuffer+sid)->key;
 	sibling.insert(temp.key,temp.pid);
-	for(int i=sid;i<keyCount;i++){
+	for(int i=sid+1;i<keyCount;i++){
 		sibling.insert((entryBuffer+i)->key,(entryBuffer+i)->pid);
 		(entryBuffer+i)->key=0;
 	}
