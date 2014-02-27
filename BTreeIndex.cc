@@ -73,7 +73,25 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
-    return 0;
+    PageId pid = rootPid; // Start at top of the tree
+	BTNonLeafNode nontemp;
+	int eid;
+	
+	// Traverse the tree until you reach the leaf height
+	for(int i = 0; i < treeHeight-1; i++) {// -1 because bottom is leaf
+		if(nontemp.read(pid, pf)) // Read in the appropriate page
+			return 1;
+		nontemp.locateChildPtr(searchKey, pid); // Update pid
+	}
+	
+	// At this point, pid is pointing to the correct leaf page
+	BTLeafNode leaftemp;
+	if(leaftemp.read(pid, pf))
+		return 1;
+	
+	leaftemp.locate(searchKey, cursor.eid); // Update eid
+	cursor.pid = pid; // Update pid
+	return 0;
 }
 
 /*
@@ -86,5 +104,19 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
-    return 0;
+	if (cursor.pid <= 0 || cursor.pid >= pf.endPid()) // Check for valid pid
+		return 1;
+		
+	BTLeafNode temp;	// Initialize temporary leaf node
+	temp.read(cursor.pid, pf);	// Read the page into the temporary buffer
+	temp.readEntry(cursor.eid,key,rid); // Read the entry
+	
+	// Increment cursor
+	cursor.eid++;
+	// Check if eid goes past current node's contents
+	if(cursor.eid > temp.getKeyCount()) {
+		cursor.eid = 0; // Set to beginning of next file
+		cursor.pid = temp.getNextNodePtr(); // Set pointer to the next page
+	}
+	return 0;
 }
