@@ -29,7 +29,22 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {
+	if(pf.open(indexname, mode))
+		return 1;
+	char* buffer;
+  // initialize
+  if (pf.endPid() == 0)
+  {
+    rootPid = -1;
+    treeHeight = 0;
     return 0;
+  }
+  //already initialized
+  if (pf.read(0, buffer))
+    return 1;
+  rootPid = *((PageId*) buffer);
+  treeHeight = *((int*) (buffer+sizeof(PageId)));
+  return 0;
 }
 
 /*
@@ -38,7 +53,13 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-    return 0;
+    //save to file
+    char* buffer;
+    *((PageId*) buffer) = rootPid;
+    *((int*) (buffer+sizeof(PageId))) = treeHeight;
+    pf.write(0,buffer);
+
+    return pf.close();
 }
 
 /*
