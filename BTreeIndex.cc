@@ -93,12 +93,11 @@ RC BTreeIndex::insert_leaf(int key, const RecordId& rid, PageId pid, int& overfl
       if (leafNode2.write(ofPid, pf))
         return 1;
     }
-    if (ln.write(pid, pf))
+    if (leafNode.write(pid, pf))
       return 1;
 }
 
-RC BTreeIndex::insert_recursive(int key, const RecordId& rid, PageId pid, int level, int& overflowKey, PageId& overflowPid)
-{
+RC BTreeIndex::insert_recursive(int key, const RecordId& rid, PageId pid, int level, int& overflowKey, PageId& overflowPid){
   overflowKey = 0;
 
   if (level == treeHeight){
