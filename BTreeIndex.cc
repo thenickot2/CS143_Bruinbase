@@ -62,6 +62,81 @@ RC BTreeIndex::close()
     return pf.close();
 }
 
+RC BTreeIndex::update_root(bool push, int key, RecordId& rid, PageId pid){
+	if(push==false){
+		BTLeafNode leaf;
+		leaf.insert(key, rid);
+		rootPid = pf.endPid();
+		treeHeight++;
+		leaf.write(rootPid, pf);
+	}else{
+		BTNonLeafNode newRoot;
+		newRoot.initializeRoot(rootPid, key, pid);
+		rootPid = pf.endPid();
+		newRoot.write(rootPid, pf);
+	}
+	return 0;
+}
+
+RC BTreeIndex::insert_leaf(int key, const RecordId& rid, PageId pid, int& overflowKey, PageId& overflowPid){
+	BTLeafNode leafNode;
+    leafNode.read(pid, pf);
+    if (leafNode.insert(key, rid)) //overflow
+    {
+      BTLeafNode leafNode2;
+      if (leafNode.insertAndSplit(key, rid, leafNode2, overflowKey))
+        return 1;
+
+      overflowPid = pf.endPid();
+      leafNode2.setNextNodePtr(leafNode.getNextNodePtr());
+      leafNode.setNextNodePtr(overflowPid);
+      if (leafNode2.write(ofPid, pf))
+        return 1;
+    }
+    if (ln.write(pid, pf))
+      return 1;
+}
+
+RC BTreeIndex::insert_recursive(int key, const RecordId& rid, PageId pid, int level, int& overflowKey, PageId& overflowPid)
+{
+  overflowKey = 0;
+
+  if (level == treeHeight){
+    insert_leaf(key, rid, pid, overflowKey, overflowPid)
+  }else{
+    BTNonLeafNode nonLeaf;
+    int eid;
+    PageId child;
+
+    nonLeaf.read(pid, pf);
+    nonLeaf.locate(key, eid);
+    nonLeaf.readEntry(eid, child);
+    insert_recursive(key, rid, child, level+1, overflowKey, overflowPid); //WE MUST GO DEEPER
+	//BEGINNING TO SURFACE, must fix the overflow at this level
+    if (overflowKey > 0) //overflow not fixed
+    {
+      if (nonLeaf.insert(overflowKey, overflowPid)) //overflow
+      {
+        int midKey;
+        BTNonLeafNode sibling;
+
+        if (nonLeaf.insertAndSplit(overflowKey, overflowPid, sibling, midKey))
+          return 1;
+        overflowKey = midKey;
+        overflowPid = pf.endPid();
+        if (sibling.write(overflowPid, pf))
+          return 1;
+      }
+      else
+      {
+        overflowKey = 0;
+      }
+      nonLeaf.write(pid, pf);
+    }
+  }
+  return 0;
+}
+
 /*
  * Insert (key, RecordId) pair to the index.
  * @param key[IN] the key for the value inserted into the index
@@ -70,7 +145,22 @@ RC BTreeIndex::close()
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
-    return 0;
+	if (treeHeight == 0) //new tree?
+	{
+		update_root(false,key,rid,NULL);
+	}
+	
+	int overflowKey=0;
+	PageId overflowPid;
+	
+	if (insert_recursive(key, rid, rootPid, 1, overflowKey, overflowPid))
+		return 1;
+
+	if (overflowKey > 0){ //create new root???
+		update_root(true,overflowKey,NULL,overflowPid); 
+		treeHeight++;
+	}
+	return 0;
 }
 
 /*
