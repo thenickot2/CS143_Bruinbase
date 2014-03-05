@@ -2,6 +2,10 @@
 #include <iostream>
 using namespace std;
 
+BTLeafNode::BTLeafNode() {
+	setNextNodePtr(-2);
+}
+
 RC BTLeafNode::initBuffer()
 {
 	for(int i=0;i<1024;i++)

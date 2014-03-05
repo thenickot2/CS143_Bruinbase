@@ -18,6 +18,7 @@
  */
 class BTLeafNode {
   public:
+	BTLeafNode();
 	RC initBuffer();
 	char* printBuffer();
   

@@ -62,7 +62,7 @@ RC BTreeIndex::close()
     return pf.close();
 }
 
-RC BTreeIndex::update_root(bool push, int key, RecordId& rid, PageId pid){
+RC BTreeIndex::update_root(bool push, int key, const RecordId& rid, PageId pid){
 	if(push==false){
 		BTLeafNode leaf;
 		leaf.insert(key, rid);
@@ -90,7 +90,7 @@ RC BTreeIndex::insert_leaf(int key, const RecordId& rid, PageId pid, int& overfl
       overflowPid = pf.endPid();
       leafNode2.setNextNodePtr(leafNode.getNextNodePtr());
       leafNode.setNextNodePtr(overflowPid);
-      if (leafNode2.write(ofPid, pf))
+      if (leafNode2.write(overflowPid, pf))
         return 1;
     }
     if (leafNode.write(pid, pf))
@@ -101,15 +101,13 @@ RC BTreeIndex::insert_recursive(int key, const RecordId& rid, PageId pid, int le
   overflowKey = 0;
 
   if (level == treeHeight){
-    insert_leaf(key, rid, pid, overflowKey, overflowPid)
+    insert_leaf(key, rid, pid, overflowKey, overflowPid);
   }else{
     BTNonLeafNode nonLeaf;
-    int eid;
     PageId child;
 
     nonLeaf.read(pid, pf);
-    nonLeaf.locate(key, eid);
-    nonLeaf.readEntry(eid, child);
+    nonLeaf.locateChildPtr(key, child);
     insert_recursive(key, rid, child, level+1, overflowKey, overflowPid); //WE MUST GO DEEPER
 	//BEGINNING TO SURFACE, must fix the overflow at this level
     if (overflowKey > 0) //overflow not fixed
@@ -146,7 +144,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 {
 	if (treeHeight == 0) //new tree?
 	{
-		update_root(false,key,rid,NULL);
+		PageId dummy;
+		update_root(false,key,rid,dummy);
 	}
 	
 	int overflowKey=0;
@@ -156,7 +155,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		return 1;
 
 	if (overflowKey > 0){ //create new root???
-		update_root(true,overflowKey,NULL,overflowPid); 
+		update_root(true,overflowKey,rid,overflowPid); 
 		treeHeight++;
 	}
 	return 0;
@@ -188,7 +187,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	int eid;
 	
 	// Traverse the tree until you reach the leaf height
-	for(int i = 0; i < treeHeight-1; i++) {// -1 because bottom is leaf
+	for(int i = 1; i < treeHeight; i++) {// -1 because bottom is leaf
 		if(nontemp.read(pid, pf)) // Read in the appropriate page
 			return 1;
 		nontemp.locateChildPtr(searchKey, pid); // Update pid

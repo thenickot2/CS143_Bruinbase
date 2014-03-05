@@ -50,7 +50,7 @@ class BTreeIndex {
    */
   RC close();
   
-  RC update_root(bool push, int key, RecordId& rid, PageId pid);
+  RC update_root(bool push, int key, const RecordId& rid, PageId pid);
   RC insert_leaf(int key, const RecordId& rid, PageId pid, int& overflowKey, PageId& overflowPid);
   RC insert_recursive(int key, const RecordId& rid, PageId pid, int level, int& overflowKey, PageId& overflowPid);
   /**
