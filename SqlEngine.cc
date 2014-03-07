@@ -131,7 +131,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
-	/*
   //Variable initialization
   RecordFile record(table+".tbl",'w');	//Target table file
   string currentLine;	//Current line of input file
@@ -146,70 +145,27 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     return 1;
   }
   
+  BTreeIndex btindex;
+  if(index)
+	if(btindex.open(table+".idx",'w')) {
+		cout << "Unable to open file.\n";
+		return 1;
+	}
+  
   //Insert lines
   while(getline(infile,currentLine)){
 	parseLoadLine(currentLine, currentKey, currentValue);	//Parse line
 	record.append(currentKey, currentValue, recordId);
+	if(index)
+		if(btindex.insert(currentKey, recordId))//Attempt to insert key
+			cout << "Could not insert key into index.\n";
   }
   
   //Close record file
   record.close();
+  if(index) //Close BTIndex if opened
+	btindex.close();
   
-  return 0;*/
-  
-  //Open the table RecordFile
-  RecordFile rf;
-  if (rf.open(table+".tbl",'w')) {
-    cout << "Error: Could Not Access File" << endl;
-    return 1;
-  }
-
-  //Open the loadfile for reading
-  ifstream lf;
-  lf.open(loadfile.c_str());
-  if (!lf.is_open()) {
-    cout << "Error: Could Not Access file" << endl;
-    return 1;
-  }
-
-  // Open an index file if requested
-  BTreeIndex btindex;
-  if (index)
-  {
-    if(btindex.open(table+".idx",'w'))
-    {
-      cout << "Error: Could Not Access Index" << endl;
-      return 1;
-    }
-  }
-
-  string line;
-  //Parse each line and append to RecordFile
-  while(lf.good()) {
-    int key;
-    string value;
-    RecordId temp;
-    getline(lf,line);
-    if (parseLoadLine(line, key, value)) {
-      continue;
-    }
-    if (rf.append(key, value, temp)) {
-      cout << "Warning: Could not add line to RecordFile" << endl;
-      continue;
-    }
-    if (index)
-    {
-      if(btindex.insert(key, temp))
-      {
-        cout << "Warning: Could not insert key into index" << endl;
-        continue;
-      }
-    }
-  }
-  rf.close();
-  lf.close();
-  if (index)
-    btindex.close();
   return 0;
 }
 
