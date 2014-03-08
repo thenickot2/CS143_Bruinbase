@@ -38,6 +38,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   RecordFile rf;   // RecordFile containing the table
   RecordId   rid;  // record cursor for table scanning
   BTreeIndex btindex;
+  IndexCursor cursor;
   
 
   RC     rc;
@@ -57,7 +58,22 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   count = 0;
   
   if(!btindex.open(table+".idx",'r')) { //Index exists, do faster algorithm
-	  while (rid < rf.endRid()) {
+	int desiredKey = 0;
+	for (unsigned i = 0; i < cond.size(); i++) {
+		if(cond[i].attr != 1) continue; // Only works for keys
+		if(cond[i].comp == SelCond::EQ) { // EQ has highest priority
+			desiredKey = i;
+			break;
+		}
+		// If greater than, then advance the starting position
+		if(cond[i].comp == SelCond::GT || cond[i].comp == SelCond::GE)
+			// GT is larger than previous ones
+			if(desiredKey == 0 || atoi(cond[i].value) > atoi(cond[desiredKey].value))
+				desiredKey = i;
+	}
+	btindex.locate((desiredKey > 0 ? (atoi(cond[desiredKey].value)):0),cursor);
+			
+	  while (!btindex.readForward(cursor,key,rid)) {
 		// read the tuple
 		if ((rc = rf.read(rid, key, value)) < 0) {
 		  fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
@@ -109,7 +125,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
 		// the condition is met for the tuple. 
 		// increase matching tuple counter
-		rid++;
 		count++;
 
 		// print the tuple 
