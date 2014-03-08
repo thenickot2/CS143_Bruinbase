@@ -56,7 +56,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   rid.pid = rid.sid = 0;
   count = 0;
   
-  if(!btindex.open(table+".idx",'r') { //Index exists, do faster algorithm
+  if(!btindex.open(table+".idx",'r')) { //Index exists, do faster algorithm
 	  while (rid < rf.endRid()) {
 		// read the tuple
 		if ((rc = rf.read(rid, key, value)) < 0) {
@@ -77,31 +77,39 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 		break;
 		  }
 
+		  //ATTR: 1 (key), 2 (value), 3(*)
 		  // skip the tuple if any condition is not met
 		  switch (cond[i].comp) {
 		  case SelCond::EQ:
-		if (diff != 0) goto next_tuple;
+		if (diff != 0)
+			if (cond[i].attr == 1) goto exit_select; // Found the key
+			else continue; // Move to next tuple
 		break;
 		  case SelCond::NE:
-		if (diff == 0) goto next_tuple;
+		if (diff == 0) continue;
 		break;
 		  case SelCond::GT:
-		if (diff <= 0) goto next_tuple;
+		if (diff <= 0) continue;
 		break;
 		  case SelCond::LT:
-		if (diff >= 0) goto next_tuple;
+		if (diff >= 0)
+			if (cond[i].attr == 1) goto exit_select;
+			else continue;
 		break;
 		  case SelCond::GE:
-		if (diff < 0) goto next_tuple;
+		if (diff < 0) continue;
 		break;
 		  case SelCond::LE:
-		if (diff > 0) goto next_tuple;
+		if (diff > 0)
+			if (cond[i].attr == 1) goto exit_select;
+			else continue;
 		break;
 		  }
 		}
 
 		// the condition is met for the tuple. 
 		// increase matching tuple counter
+		rid++;
 		count++;
 
 		// print the tuple 
@@ -116,10 +124,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 		  fprintf(stdout, "%d '%s'\n", key, value.c_str());
 		  break;
 		}
-
-		// move to the next tuple
-		next_tuple:
-		++rid;
 	  }
 	} else {
 		while (rid < rf.endRid()) {
