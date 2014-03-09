@@ -14,7 +14,7 @@
 //#include "RecordFile.h"
 using namespace std;
 
-/*
+
 int main()
 {
   // run the SQL engine taking user commands from standard input (console).
@@ -25,32 +25,31 @@ int main()
 
 /*
 #include "BTreeIndex.h"
+#include "BTreeNode.h"
 #include <iostream>
 using namespace std;
 int main()
 {
-	/*
+	
 	BTLeafNode testnode;
-	testnode.initBuffer();
-	cout << testnode.getKeyCount();
 	RecordId id;
 	id.pid=11; id.sid=12;
-	for(int i = 1; i < 86; i++)
+	for(int i = 15; i > 1; i--)
 		testnode.insert(i,id);
-	BTLeafNode sibling;
-	sibling.initBuffer();
-	int sibkey;
-	testnode.insertAndSplit(100,id,sibling,sibkey);
+	//BTLeafNode sibling;
+	//int sibkey;
+	//testnode.insertAndSplit(100,id,sibling,sibkey);
 	
-	sibling.printBuffer();
+	testnode.printBuffer();
 	//cout << sibkey;
 	return 0;
-	
+	/*
 	BTreeIndex bindex;
 	bindex.open('test','w');
 	cout << bindex.rootPid << endl << bindex.treeHeight;
-}*/
+}
 
+/*
 #include <iostream>
 #include "BTreeIndex.h"
 #include "RecordFile.h"
@@ -68,7 +67,7 @@ int main()
   string value;
   RecordId rid;
   int count;
-
+/*
   if(rf.open("xsmall.tbl",'r'))
     cout << "Could not open record file" << endl;
 
@@ -81,12 +80,17 @@ int main()
     cout << "Could not locate cursor" << endl;
 
   count = 0;
-
+  
   BTLeafNode ln;
   PageFile pf;
-  ln.read(cursor.pid,pf);
+  //ln.read(cursor.pid,pf);
   ln.printBuffer();
   
+  
+
+  if(index.locate(0,cursor))
+    cout << "Could not locate cursor" << endl;
+
   while (!index.readForward(cursor, key, rid))
   {
     cout << "Rid: (" << rid.pid << "," << rid.sid << ") ";
@@ -96,4 +100,4 @@ int main()
   }
 
   cout << count << endl;
-}
+}*/

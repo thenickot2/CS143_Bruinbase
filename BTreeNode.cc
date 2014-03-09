@@ -3,21 +3,15 @@
 using namespace std;
 
 BTLeafNode::BTLeafNode() {
-	setNextNodePtr(-2);
+	initBuffer();
 }
 
 RC BTLeafNode::initBuffer()
 {
-	for(int i=0;i<1024;i++)
-		buffer[i]=0;
+	int* buf = (int*) buffer;
+	for(int i=0;i<256;i++)
+		buf[i]=0;
 	return 0;
-}
-char* BTLeafNode::printBuffer()
-{
-	Entry* buf = (Entry*) buffer;
-	for(int i=0; i<getKeyCount();i++)
-		cout << (buf[i].key) << endl;
-	cout << getKeyCount() << endl;
 }
 
 
@@ -55,8 +49,8 @@ int BTLeafNode::getKeyCount()
 	int keyCount=0;
 	Entry* entry=(Entry*) buffer;
 	for(int count=0;count<maxKeyCount;count++){
-		if((entry+count)->key!=0)
-			keyCount++;
+		if((entry+count)->key==0) break;
+		keyCount++;
 	}
 	return keyCount;
 }
@@ -88,8 +82,8 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 	// Shift any larger entries to the right of the array
 	int amountToShift=keyCount-insertPosition;
 	for (int i=amountToShift;i>0;i--){
-		(entryBuffer+insertPosition+i+1)->key=(entryBuffer+insertPosition+i)->key;
-		(entryBuffer+insertPosition+i+1)->rid=(entryBuffer+insertPosition+i)->rid;
+		(entryBuffer+insertPosition+i)->key=(entryBuffer+insertPosition+i-1)->key;
+		(entryBuffer+insertPosition+i)->rid=(entryBuffer+insertPosition+i-1)->rid;
 	}
 	// Modify entry/insert
 	(entryBuffer+insertPosition)->key=key;
@@ -156,12 +150,13 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 RC BTLeafNode::locate(int searchKey, int& eid)
 {
 	eid=0;
+	if(searchKey==0) return 0; // Just want the beginning of the page
 	int keyCount=getKeyCount();
 	Entry* entry=(Entry*) buffer;
 	
 	while (eid<keyCount){
 		// Found the key
-		if(entry->key>searchKey)
+		if((entry+eid)->key>searchKey)
 			return 0;
 		eid++;
 	}

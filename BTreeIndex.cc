@@ -187,7 +187,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	int eid;
 	
 	// Traverse the tree until you reach the leaf height
-	for(int i = 1; i < treeHeight; i++) {// -1 because bottom is leaf
+	for(int i = 1; i < treeHeight; i++) {
 		if(nontemp.read(pid, pf)) // Read in the appropriate page
 			return 1;
 		nontemp.locateChildPtr(searchKey, pid); // Update pid
