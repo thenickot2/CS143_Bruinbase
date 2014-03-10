@@ -9,7 +9,7 @@
  
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
-
+#include <iostream>
 using namespace std;
 
 /*
@@ -42,8 +42,8 @@ RC BTreeIndex::open(const string& indexname, char mode)
   //already initialized
   if (pf.read(0, buffer))
     return 1;
-  rootPid = *((PageId*) buffer);
-  treeHeight = *((int*) (buffer+sizeof(PageId)));
+  rootPid = *((PageId*) buffer + 254);
+  treeHeight = *((int*) (buffer+253));
   return 0;
 }
 
@@ -55,8 +55,9 @@ RC BTreeIndex::close()
 {
     //save to file
     char* buffer;
-    *((PageId*) buffer) = rootPid;
-    *((int*) (buffer+sizeof(PageId))) = treeHeight;
+	pf.read(0, buffer);
+	*((PageId*) buffer + 254)=rootPid;
+	*((int*) (buffer+253))=treeHeight;
     pf.write(0,buffer);
 
     return pf.close();
@@ -146,17 +147,17 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	{
 		PageId dummy;
 		update_root(false,key,rid,dummy);
-	}
-	
-	int overflowKey=0;
-	PageId overflowPid;
-	
-	if (insert_recursive(key, rid, rootPid, 1, overflowKey, overflowPid))
-		return 1;
+	}else{
+		int overflowKey=0;
+		PageId overflowPid;
+		
+		if (insert_recursive(key, rid, rootPid, 1, overflowKey, overflowPid))
+			return 1;
 
-	if (overflowKey > 0){ //create new root???
-		update_root(true,overflowKey,rid,overflowPid); 
-		treeHeight++;
+		if (overflowKey > 0){ //create new root???
+			update_root(true,overflowKey,rid,overflowPid); 
+			treeHeight++;
+		}
 	}
 	return 0;
 }
@@ -213,7 +214,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
-	if (cursor.pid <= 0 || cursor.pid >= pf.endPid()) // Check for valid pid
+	if (cursor.pid < 0 || cursor.pid >= pf.endPid()) // Check for valid pid
 		return 1;
 		
 	BTLeafNode temp;	// Initialize temporary leaf node
@@ -223,9 +224,11 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	// Increment cursor
 	cursor.eid++;
 	// Check if eid goes past current node's contents
-	if(cursor.eid > temp.getKeyCount()) {
+	if(cursor.eid >= temp.getKeyCount()) {
 		cursor.eid = 0; // Set to beginning of next file
 		cursor.pid = temp.getNextNodePtr(); // Set pointer to the next page
+		if(cursor.pid==-2)
+			return 1;
 	}
 	return 0;
 }

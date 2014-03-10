@@ -11,10 +11,9 @@ RC BTLeafNode::initBuffer()
 	int* buf = (int*) buffer;
 	for(int i=0;i<256;i++)
 		buf[i]=0;
+	buf[255]=-2;
 	return 0;
 }
-
-
 
 /*
  * Read the content of the node from the page pid in the PageFile pf.
@@ -45,12 +44,12 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
 int BTLeafNode::getKeyCount()
 {
 	// Maximum size of buffer / size of Entry without the pointer at the end
-	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry));
 	int keyCount=0;
 	Entry* entry=(Entry*) buffer;
 	for(int count=0;count<maxKeyCount;count++){
-		if((entry+count)->key==0) break;
-		keyCount++;
+		if((entry+count)->key!=0)
+			keyCount++;
 	}
 	return keyCount;
 }
@@ -235,7 +234,7 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
 int BTNonLeafNode::getKeyCount()
 {
 	// Same as BTLeafNode
-	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry));
 	int keyCount=0;
 	Entry* entry=(Entry*) (buffer+sizeof(PageId*));
 	for(int count=0;count<maxKeyCount;count++){
@@ -255,7 +254,7 @@ int BTNonLeafNode::getKeyCount()
 RC BTNonLeafNode::insert(int key, PageId pid)
 { 
 	int keyCount=getKeyCount();
-	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry));
 	if (keyCount == maxKeyCount)
 		return 1;	//buffer full
 		

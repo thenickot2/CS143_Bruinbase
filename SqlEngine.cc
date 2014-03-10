@@ -79,7 +79,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 		  fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
 		  goto exit_select;
 		}
-
 		
 		// check the conditions on the tuple
 		for (unsigned i = 0; i < cond.size(); i++) {

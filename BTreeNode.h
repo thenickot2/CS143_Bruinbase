@@ -20,7 +20,7 @@ class BTLeafNode {
   public:
 	BTLeafNode();
 	RC initBuffer();
-  
+	RC printBuffer();
   
    /**
     * Insert the (key, rid) pair to the node.
@@ -108,8 +108,8 @@ class BTLeafNode {
     char buffer[PageFile::PAGE_SIZE];
     
     typedef struct {
-		RecordId rid;
 		int key;
+		RecordId rid;
 	} Entry;
 }; 
 
