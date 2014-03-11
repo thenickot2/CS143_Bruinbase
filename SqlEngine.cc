@@ -71,7 +71,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 			if(desiredKey == 0 || atoi(cond[i].value) > atoi(cond[desiredKey].value))
 				desiredKey = i;
 	}
-	btindex.locate((desiredKey > 0 ? (atoi(cond[desiredKey].value)):0),cursor);
+	btindex.locate((desiredKey >= 0 ? (atoi(cond[desiredKey].value)):0),cursor);
 			
 	  while (!btindex.readForward(cursor,key,rid)) {
 		// read the tuple
