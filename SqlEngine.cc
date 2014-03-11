@@ -58,7 +58,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   count = 0;
   
   if(!btindex.open(table+".idx",'r')) { //Index exists, do faster algorithm
-	int desiredKey = 0;
+	int desiredKey = -1;
 	for (unsigned i = 0; i < cond.size(); i++) {
 		if(cond[i].attr != 1) continue; // Only works for keys
 		if(cond[i].comp == SelCond::EQ) { // EQ has highest priority
@@ -68,10 +68,10 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 		// If greater than, then advance the starting position
 		if(cond[i].comp == SelCond::GT || cond[i].comp == SelCond::GE)
 			// GT is larger than previous ones
-			if(desiredKey == 0 || atoi(cond[i].value) > atoi(cond[desiredKey].value))
+			if(desiredKey == -1 || atoi(cond[i].value) > atoi(cond[desiredKey].value))
 				desiredKey = i;
 	}
-	btindex.locate((desiredKey >= 0 ? (atoi(cond[desiredKey].value)):0),cursor);
+	btindex.locate((desiredKey > -1 ? (atoi(cond[desiredKey].value)):0),cursor);
 			
 	  while (!btindex.readForward(cursor,key,rid)) {
 		// read the tuple
