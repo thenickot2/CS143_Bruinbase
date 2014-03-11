@@ -18,8 +18,8 @@ RC BTLeafNode::initBuffer()
 RC BTLeafNode::printBuffer(){
 	Entry* buf = (Entry*) buffer;
 	for(int i=0;i<84;i++)
-		cerr << buf[i].key << " ";
-	cerr << endl;
+		cout << buf[i].key << " ";
+	cout << endl;
 	return 0;
 }
 
