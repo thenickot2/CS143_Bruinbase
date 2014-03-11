@@ -73,7 +73,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 	}
 	btindex.locate((desiredKey > -1 ? (atoi(cond[desiredKey].value)):0),cursor);
 			
-	  while (!btindex.readForward(cursor,key,rid)) {
+	  while (btindex.readForward(cursor,key,rid) != RC_END_OF_TREE) {
 		// read the tuple
 		if ((rc = rf.read(rid, key, value)) < 0) {
 		  fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());

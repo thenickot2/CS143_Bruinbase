@@ -18,8 +18,8 @@ RC BTLeafNode::initBuffer()
 RC BTLeafNode::printBuffer(){
 	int* buf = (int*) buffer;
 	for(int i=0;i<256;i++)
-		cout << buf[i];
-	cout << endl;
+		cerr << buf[i];
+	cerr << endl;
 	return 0;
 }
 
@@ -122,7 +122,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	// Shift any larger entries to the right of the array
 	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
 	Entry temp; //hold last entry since it might be overwritten
-	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry))-1;
 	temp.key=(entryBuffer+maxKeyCount-1)->key;
 	temp.rid=(entryBuffer+maxKeyCount-1)->rid;
 	
