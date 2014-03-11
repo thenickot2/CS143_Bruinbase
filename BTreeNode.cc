@@ -167,7 +167,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 	
 	while (eid<keyCount){
 		// Found the key
-		if((entry+eid)->key>searchKey)
+		if((entry+eid)->key>=searchKey)
 			return 0;
 		eid++;
 	}
