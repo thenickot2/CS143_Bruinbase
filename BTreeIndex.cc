@@ -17,7 +17,6 @@ using namespace std;
  */
 BTreeIndex::BTreeIndex()
 {
-    rootPid = -1;
 }
 
 /*
@@ -31,11 +30,11 @@ RC BTreeIndex::open(const string& indexname, char mode)
 {
 	if(pf.open(indexname, mode))
 		return 1;
-	char* buffer;
+	char buffer[PageFile::PAGE_SIZE];
   // initialize
   if (pf.endPid() == 0)
   {
-    rootPid = -1;
+    rootPid = 0;
     treeHeight = 0;
     return 0;
   }
@@ -54,7 +53,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 RC BTreeIndex::close()
 {
     //save to file
-    char* buffer;
+    char buffer[PageFile::PAGE_SIZE];
 	pf.read(0, buffer);
 	*((PageId*) buffer + 254)=rootPid;
 	*((int*) (buffer+253))=treeHeight;
@@ -219,16 +218,18 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 		
 	BTLeafNode temp;	// Initialize temporary leaf node
 	temp.read(cursor.pid, pf);	// Read the page into the temporary buffer
-	temp.readEntry(cursor.eid,key,rid); // Read the entry
 	
-	// Increment cursor
-	cursor.eid++;
 	// Check if eid goes past current node's contents
-	if(cursor.eid >= temp.getKeyCount()) {
+	if((cursor.eid) == temp.getKeyCount()) {
 		cursor.eid = 0; // Set to beginning of next file
 		cursor.pid = temp.getNextNodePtr(); // Set pointer to the next page
-		if(cursor.pid==-2)
+		if(cursor.pid==RC_END_OF_TREE)
+			return RC_END_OF_TREE;
+		else
 			return 1;
+	}else{
+		temp.readEntry(cursor.eid,key,rid); // Read the entry
+		cursor.eid++;
 	}
 	return 0;
 }

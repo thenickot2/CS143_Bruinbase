@@ -9,11 +9,6 @@
  
 #include "Bruinbase.h"
 #include "SqlEngine.h"
-//#include <iostream>
-//#include "BTreeNode.h"
-//#include "RecordFile.h"
-using namespace std;
-
 
 int main()
 {
@@ -22,82 +17,3 @@ int main()
 
   return 0;
 }
-
-/*
-#include "BTreeIndex.h"
-#include "BTreeNode.h"
-#include <iostream>
-using namespace std;
-int main()
-{
-	
-	BTLeafNode testnode;
-	RecordId id;
-	id.pid=11; id.sid=12;
-	for(int i = 15; i > 1; i--)
-		testnode.insert(i,id);
-	//BTLeafNode sibling;
-	//int sibkey;
-	//testnode.insertAndSplit(100,id,sibling,sibkey);
-	
-	testnode.printBuffer();
-	//cout << sibkey;
-	return 0;
-	/*
-	BTreeIndex bindex;
-	bindex.open('test','w');
-	cout << bindex.rootPid << endl << bindex.treeHeight;
-}
-
-/*
-#include <iostream>
-#include "BTreeIndex.h"
-#include "RecordFile.h"
-#include "BTreeNode.h"
-using namespace std;
-
-
-int main()
-{
-  BTreeIndex index;
-  IndexCursor cursor;
-  RecordFile rf;
-
-  int key;
-  string value;
-  RecordId rid;
-  int count;
-/*
-  if(rf.open("xsmall.tbl",'r'))
-    cout << "Could not open record file" << endl;
-
-  if(index.open("xsmall.idx", 'w'))
-  {
-    cout << "Index failed to open" << endl;
-  }
-
-  if(index.locate(0,cursor))
-    cout << "Could not locate cursor" << endl;
-
-  count = 0;
-  
-  BTLeafNode ln;
-  PageFile pf;
-  //ln.read(cursor.pid,pf);
-  ln.printBuffer();
-  
-  
-
-  if(index.locate(0,cursor))
-    cout << "Could not locate cursor" << endl;
-
-  while (!index.readForward(cursor, key, rid))
-  {
-    cout << "Rid: (" << rid.pid << "," << rid.sid << ") ";
-    rf.read(rid, key, value);
-    cout << "Key: " << key << " Value: " << value << endl;
-    count++;
-  }
-
-  cout << count << endl;
-}*/

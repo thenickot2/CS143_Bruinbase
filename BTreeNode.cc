@@ -11,7 +11,7 @@ RC BTLeafNode::initBuffer()
 	int* buf = (int*) buffer;
 	for(int i=0;i<256;i++)
 		buf[i]=0;
-	buf[255]=-2;
+	buf[255]=RC_END_OF_TREE;
 	return 0;
 }
 
@@ -48,8 +48,9 @@ int BTLeafNode::getKeyCount()
 	int keyCount=0;
 	Entry* entry=(Entry*) buffer;
 	for(int count=0;count<maxKeyCount;count++){
-		if((entry+count)->key!=0)
-			keyCount++;
+		if((entry+count)->key==0)
+			break;
+		keyCount++;
 	}
 	return keyCount;
 }
@@ -236,7 +237,7 @@ int BTNonLeafNode::getKeyCount()
 	// Same as BTLeafNode
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry));
 	int keyCount=0;
-	Entry* entry=(Entry*) (buffer+sizeof(PageId*));
+	Entry* entry=(Entry*) (buffer);
 	for(int count=0;count<maxKeyCount;count++){
 		if((entry+count)->key!=0)
 			keyCount++;

@@ -215,6 +215,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   // close the table file and return
   exit_select:
   rf.close();
+  btindex.close();
   return rc;
 }
 
