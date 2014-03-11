@@ -96,6 +96,8 @@ RC BTreeIndex::insert_leaf(int key, const RecordId& rid, PageId pid, int& overfl
     }
     if (leafNode.write(pid, pf))
       return 1;
+	 
+	return 0;
 }
 
 RC BTreeIndex::insert_recursive(int key, const RecordId& rid, PageId pid, int level, int& overflowKey, PageId& overflowPid){

@@ -16,9 +16,9 @@ RC BTLeafNode::initBuffer()
 }
 
 RC BTLeafNode::printBuffer(){
-	int* buf = (int*) buffer;
-	for(int i=0;i<256;i++)
-		cerr << buf[i];
+	Entry* buf = (Entry*) buffer;
+	for(int i=0;i<84;i++)
+		cerr << buf[i].key << " ";
 	cerr << endl;
 	return 0;
 }
@@ -134,8 +134,9 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	(entryBuffer+eid)->key=key;
 	(entryBuffer+eid)->rid=rid;
 	
+	
 	// Split
-	sibling.insert(temp.key,temp.rid);
+	//sibling.insert(temp.key,temp.rid);
 	siblingKey=(entryBuffer+sid)->key;
 	// Start at the split position
 	for(int i=sid;i<keyCount;i++){
@@ -143,7 +144,10 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 		// Null out the remainder of the original buffer
 		// so keyCount returns the correct value
 		(entryBuffer+i)->key=0;
+		(entryBuffer+i)->rid.pid=0;
+		(entryBuffer+i)->rid.sid=0;
 	}
+	
 	return 0;
 }
 
