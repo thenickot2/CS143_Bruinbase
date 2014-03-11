@@ -15,6 +15,14 @@ RC BTLeafNode::initBuffer()
 	return 0;
 }
 
+RC BTLeafNode::printBuffer(){
+	int* buf = (int*) buffer;
+	for(int i=0;i<256;i++)
+		cout << buf[i];
+	cout << endl;
+	return 0;
+}
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -64,7 +72,7 @@ int BTLeafNode::getKeyCount()
 RC BTLeafNode::insert(int key, const RecordId& rid)
 {
 	int keyCount=getKeyCount();
-	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
+	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry))-1;
 	if (keyCount == maxKeyCount)
 		return 1;	//buffer full
 		
@@ -371,13 +379,7 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
-{
-	// Clear the buffer
-	Entry* entryBuffer=(Entry*) (buffer+sizeof(PageId*));
-	int keyCount=getKeyCount();
-	for(int i=0;i<keyCount;i++)
-		(entryBuffer+i)->key=0;
-		
+{	
 	// Typecast the buffer in this special format to make initializing easier
 	struct format{
 		PageId pid1;
