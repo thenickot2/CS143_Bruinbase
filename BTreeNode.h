@@ -119,6 +119,8 @@ class BTLeafNode {
  */
 class BTNonLeafNode {
   public:
+    BTNonLeafNode();
+	RC initBuffer();
    /**
     * Insert a (key, pid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.

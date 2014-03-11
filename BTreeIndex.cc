@@ -89,8 +89,6 @@ RC BTreeIndex::insert_leaf(int key, const RecordId& rid, PageId pid, int& overfl
 
       overflowPid = pf.endPid();
       leafNode.setNextNodePtr(overflowPid);
-	  leafNode.printBuffer();
-	  leafNode2.printBuffer();
       if (leafNode2.write(overflowPid, pf))
         return 1;
     }
@@ -108,7 +106,6 @@ RC BTreeIndex::insert_recursive(int key, const RecordId& rid, PageId pid, int le
   }else{
     BTNonLeafNode nonLeaf;
     PageId child;
-
     nonLeaf.read(pid, pf);
     nonLeaf.locateChildPtr(key, child);
     insert_recursive(key, rid, child, level+1, overflowKey, overflowPid); //WE MUST GO DEEPER

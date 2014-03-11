@@ -134,7 +134,6 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	(entryBuffer+eid)->key=key;
 	(entryBuffer+eid)->rid=rid;
 	
-	
 	// Split
 	//sibling.insert(temp.key,temp.rid);
 	siblingKey=(entryBuffer+sid)->key;
@@ -215,6 +214,19 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
 {
 	PageId* sib = (PageId*) (buffer+PageFile::PAGE_SIZE) - 1;
 	*sib = pid;
+	return 0;
+}
+
+BTNonLeafNode::BTNonLeafNode() {
+	initBuffer();
+}
+
+RC BTNonLeafNode::initBuffer()
+{
+	int* buf = (int*) buffer;
+	for(int i=0;i<256;i++)
+		buf[i]=0;
+	buf[255]=RC_END_OF_TREE;
 	return 0;
 }
 
