@@ -18,8 +18,8 @@ RC BTLeafNode::initBuffer()
 RC BTLeafNode::printBuffer(){
 	Entry* buf = (Entry*) buffer;
 	for(int i=0;i<84;i++)
-		cout << buf[i].key << " ";
-	cout << endl;
+		cerr << buf[i].key << " ";
+	cerr << endl;
 	return 0;
 }
 
@@ -96,6 +96,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 	// Modify entry/insert
 	(entryBuffer+insertPosition)->key=key;
 	(entryBuffer+insertPosition)->rid=rid;
+	
 	return 0;
 }
 
@@ -118,24 +119,10 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	int keyCount=getKeyCount();
 	int sid=(keyCount+1)/2; // Starting position of entries for siblings(even split)
 	
-	// Do normal insert
-	// Shift any larger entries to the right of the array
 	Entry* entryBuffer=(Entry*) buffer; //buffer typecasted
-	Entry temp; //hold last entry since it might be overwritten
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*)-2*sizeof(int))/(sizeof(Entry))-1;
-	temp.key=(entryBuffer+maxKeyCount-1)->key;
-	temp.rid=(entryBuffer+maxKeyCount-1)->rid;
-	
-	for (int i=keyCount-1;i>eid;i--){
-		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
-		(entryBuffer+i)->rid=(entryBuffer+i-1)->rid;
-	}
-	// Modify entry/insert
-	(entryBuffer+eid)->key=key;
-	(entryBuffer+eid)->rid=rid;
 	
 	// Split
-	//sibling.insert(temp.key,temp.rid);
 	siblingKey=(entryBuffer+sid)->key;
 	// Start at the split position
 	for(int i=sid;i<keyCount;i++){
@@ -147,6 +134,12 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 		(entryBuffer+i)->rid.sid=0;
 	}
 	
+	// Insert in appropriate buffer
+	if(eid < sid)
+		insert(key,rid);
+	else
+		sibling.insert(key,rid);
+		
 	return 0;
 }
 
@@ -329,24 +322,21 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 	// Shift any larger entries to the right of the array
 	Entry temp; // Hold last entry since it might be overwritten
 	int maxKeyCount=(PageFile::PAGE_SIZE-sizeof(PageId*))/(sizeof(Entry));
-	temp.key=(entryBuffer+maxKeyCount-1)->key;
-	temp.pid=(entryBuffer+maxKeyCount-1)->pid;
-	int amountToShift=keyCount-eid;
-	for (int i=keyCount-1;i>eid;i--){
-		(entryBuffer+i)->key=(entryBuffer+i-1)->key;
-		(entryBuffer+i)->pid=(entryBuffer+i-1)->pid;
-	}
-	// Modify entry/insert
-	(entryBuffer+eid)->key=key;
-	(entryBuffer+eid)->pid=pid;
 	
 	// Split
 	midKey=(entryBuffer+sid)->key;
-	sibling.insert(temp.key,temp.pid);
 	for(int i=sid+1;i<keyCount;i++){
 		sibling.insert((entryBuffer+i)->key,(entryBuffer+i)->pid);
 		(entryBuffer+i)->key=0;
+		(entryBuffer+i)->pid=0;
 	}
+	
+	// Insert in appropriate buffer
+	if(eid < sid)
+		insert(key,pid);
+	else
+		sibling.insert(key,pid);
+	
 	return 0;
 }
 

@@ -90,8 +90,7 @@ RC BTreeIndex::insert_leaf(int key, const RecordId& rid, PageId pid, int& overfl
       overflowPid = pf.endPid();
 	  leafNode2.setNextNodePtr(leafNode.getNextNodePtr());
       leafNode.setNextNodePtr(overflowPid);
-	  leafNode.printBuffer();
-	  cout << leafNode.getNextNodePtr() << endl;
+	  
       if (leafNode2.write(overflowPid, pf))
         return 1;
     }
